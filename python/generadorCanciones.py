@@ -1,12 +1,23 @@
 import pygame, sys
 from pygame.locals import *
 
+def guardar_cancion(nameSong,lista):
+	f = open (nameSong+'.txt', 'w')
+	for elemento in lista:
+		f.write(str(elemento))
+		f.write('\n')
+	f.close()
+
+
 pygame.init()
+
+#solicita nombre de archivo a cargar:
+nameSong = input("Ingrese nombre de cancion: ")
 
 WHITE = (255,255,255)
 
 pygame.mixer.init()
-pygame.mixer.music.load('pepe2.mp3')
+pygame.mixer.music.load(nameSong+'.mp3')
 pygame.mixer.music.play(-1,0.0)
 
 BACKGROUND = pygame.display.set_mode((400,600), 0, 32)
@@ -15,15 +26,18 @@ redApretado = False
 greenApretado = False
 blueApretado = False
 
-FPS= 15 #FRAMES PER SECOND
+FPS= 20 #FRAMES PER SECOND
 fpsClock = pygame.time.Clock()
 cancion = []
 tempo = 0
 grabar = True
+
+
 while grabar:
 	tempo+=1
 #	BACKGROUND.fill(WHITE)
-	acorde = [False,False,False]
+	acorde = 0
+
 	greenApretado=False
 	redApretado=False
 	blueApretado=False
@@ -45,14 +59,16 @@ while grabar:
 				redApretado=False
 			if event.key == K_c:
 				blueApretado=False
+	#determino el acorde segun botones apretados
 	if greenApretado==True:
-		acorde[0]=True
+		acorde+=100
 	if redApretado==True:
-		acorde[1]=True
+		acorde+=10
 	if blueApretado==True:
-		acorde[2]=True
+		acorde+=1
 	
 	cancion.append(acorde)
 	fpsClock.tick(FPS)
-print(cancion)
+guardar_cancion(nameSong,cancion)
+#print(cancion)
 #pygame.mixer.music.stop()
