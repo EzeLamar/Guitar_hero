@@ -13,11 +13,11 @@
  	#recorremos el notasSonando y las dibujamos en su correspondiente posicion
  	#chequeamos la 
 
-import pygame, sys, time, _thread, socket
+import pygame, sys, os, time, threading, socket
 from pygame.locals import *
 
 ##----------------SERVIDOR TCP-----------------------
-def iniciarServidor(threadName):
+def iniciarServidor():
 	#variable global compartida
 	global notaActual
 
@@ -45,7 +45,9 @@ def iniciarServidor(threadName):
 					print('waiting next package from client')
 					notaActual=int(data)
 					connection.sendall(str.encode(data))
+					time.sleep(0.01)
 				else:
+					pass
 					print('no more data from ', client_address)
 					break           
 		finally:
@@ -79,11 +81,11 @@ def convertirAcorde(x):
 		acorde[0]=True
 	return acorde
 
-def cargar_cancion():
+def cargar_cancion(NOMBRE_CANCION):
 	cancion=[]
 	CANT_NOTAS=3
 
-	with open("pepe.txt", "r") as fichero:
+	with open(NOMBRE_CANCION+'.txt', "r") as fichero:
 		for linea in fichero:
 			acorde=[False,False,False]
 #			print(linea)
@@ -100,17 +102,28 @@ class disco_nota:
 	posx = 0
 	posy = 0
 
-def iniciar_juego(threadName):
+def iniciar_juego():
 	global notaActual
+
 	pygame.init()
+
+	N_RITMOS = 18
+	
+	##INDICAMOS LA CANCION A TOCAR:
+	NOMBRE_CANCION= input('ingrese la cancion a tocar: ')
+
+	#obtenemos Ruta donde se encuentran las canciones:
+	FILEDIR = os.path.dirname(os.path.realpath('__file__'))
+	FILESONGS = FILEDIR+'/canciones/'
+
 
 	#ventana juego
 	BACKGROUND = pygame.display.set_mode((400,600), 0, 32)
 	pygame.display.set_caption('Guitar Hero')
-
 	#frames per second
 	FPS= 20 #FRAMES PER SECOND
 	fpsClock = pygame.time.Clock()
+	MOV_Y=20
 
 	#set up the Colors
 	BLACK 	= (0,0,0)
@@ -127,8 +140,8 @@ def iniciar_juego(threadName):
 	POSINIBLUE =	(140,0)
 
 	#aca se cargan las notas de una cancion
-	notas = cargar_cancion()
-	ritmo = 35	#indica que notas hay que cargar en el juego
+	notas = cargar_cancion(FILESONGS+NOMBRE_CANCION)
+	ritmo = 0	#indica que notas hay que cargar en el juego
 	notasSonando = []
 	contador=0
 
@@ -138,19 +151,32 @@ def iniciar_juego(threadName):
 	textRectPuntaje = textSurfacePuntaje.get_rect()
 	textRectPuntaje.center = (270,100)
 
-	##MUSICA DE FONDO
+#	##MUSICA DE FONDO
+	musicaReproduciendo=False
 	pygame.mixer.init()
-	pygame.mixer.music.load('pepe.mp3')
-	#arranco la musica
-	pygame.mixer.music.play(-1,0.0)
+	pygame.mixer.music.load(FILESONGS+NOMBRE_CANCION+'.mp3')
 
+	##CARTEL 3..2..1..GO!
+	time.sleep(1)
+	print('preparado...')
+	time.sleep(1)
+	print('listo..')
+	time.sleep(1)
+	print('ROCK!')
 
 
 	while True:
-#		print(threadName)
+#		print(ritmo)
+		
+		#arranco la musica luego de N ritmos
+		if ritmo==N_RITMOS and not musicaReproduciendo:
+			print('comienza la musica!')
+			pygame.mixer.music.play(-1,0.0)
+			musicaReproduciendo= True
+
 		#GUI
 		BACKGROUND.fill(WHITE)
-		textSurfacePuntaje = textoPuntajeObj.render(str(contador), True, GREEN, BLUE)
+		textSurfacePuntaje = textoPuntajeObj.render(str(fpsClock.get_fps()), True, GREEN, BLUE)
 		BACKGROUND.blit(textSurfacePuntaje, textRectPuntaje)
 		pygame.draw.line(BACKGROUND,BLACK, (20,0), (20,600), 4)
 		pygame.draw.line(BACKGROUND,BLACK, (80,0), (80,600), 4)
@@ -184,7 +210,7 @@ def iniciar_juego(threadName):
 		aEliminar=[]
 		#LOGICA DE MOVIMIENTO
 		for nota in notasSonando:
-			nota.posy += 20
+			nota.posy += MOV_Y
 			if nota.posy >= 600:
 				aEliminar.append(nota)
 			pygame.draw.circle(BACKGROUND,nota.color, (nota.posx,nota.posy), 20, 0)
@@ -221,23 +247,12 @@ def iniciar_juego(threadName):
 					contador+=1
 			elif event.type == QUIT:
 #				print(contador)
+				print('good bye')
 				pygame.quit()
 				sys.exit()
 
 		pygame.display.update()
-		fpsClock.tick(FPS)	##siempre se llama luego del update()
-
-
-#def reproducirMusica(threadName):
-#	##MUSICA DE FONDO
-#	pygame.mixer.init()
-#	pygame.mixer.music.load('pepe.mp3')
-#	#arranco la musica
-#	pygame.mixer.music.play(-1,0.0)
-#
-#	while(True):
-#		print(threadName)
-#		pass
+		fpsClock.tick_busy_loop(FPS)	##siempre se llama luego del update()
 
 ##-------------------------------------------------------------------------------##
 
@@ -245,15 +260,17 @@ def iniciar_juego(threadName):
 #variables globales
 notaActual =0
 
+##-------HILOS---------
+juegoH = threading.Thread(name='Juego', target=iniciar_juego)
+serverH = threading.Thread(name='Server', target=iniciarServidor)
+
+serverH.setDaemon(True)
+juegoH.setDaemon(True)
+
+serverH.start()
+juegoH.start()
+
+juegoH.join()
+serverH.join()
 
 
-#iniciar_juego(0)
-try:
-	_thread.start_new_thread( iniciar_juego, (0,) )
-	_thread.start_new_thread( iniciarServidor, (1,) )
-#	_thread.start_new_thread( reproducirMusica, ("Thread-3",) )
-except:
-   print ("Error: unable to start thread")
-
-while 1:
-   pass

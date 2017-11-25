@@ -31,7 +31,7 @@ try:
         notaActual+=1
         if notaActual>4:
             notaActual=0
-        time.sleep(1)
+        time.sleep(0.1)
 
 finally:
     print('closing socket')

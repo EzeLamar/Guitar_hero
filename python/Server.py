@@ -5,7 +5,7 @@ import sys
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 # Bind the socket to the port
-server_address = ('192.168.0.21', 8888)
+server_address = ('localhost', 8888)
 print('starting up on port',server_address)
 sock.bind(server_address)
 
@@ -26,7 +26,7 @@ while True:
             print('received ', data)
             if data:
                 print('waiting next package from client')
-#                connection.sendall(data)		si quisiera contestar...
+                connection.sendall(str.encode(data))		
             else:
                 print('no more data from ', client_address)
                 break           
