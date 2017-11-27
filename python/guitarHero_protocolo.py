@@ -30,6 +30,24 @@ def actualizarVolumen(cantVol, BACKGROUND):
 	BACKGROUND.blit(textSurfacePuntaje, textRectPuntaje)
 
 
+def actualizarAciertos(cantAcertadas,cantErradas, BACKGROUND):
+	BLACK= (0,0,0)
+	WHITE= (255,255,255)
+	X_INICIAL=320 
+	Y_INICIAL=400
+	
+	textoPuntajeObj = pygame.font.Font('freesansbold.ttf', 32)
+	#escribo aciertos:
+	textSurfacePuntaje = textoPuntajeObj.render("aciertos: "+str(cantAcertadas), True, BLACK, WHITE)
+	textRectPuntaje = textSurfacePuntaje.get_rect()
+	textRectPuntaje.center = (X_INICIAL,Y_INICIAL)
+	BACKGROUND.blit(textSurfacePuntaje, textRectPuntaje)
+	##escribo errores:
+	textSurfacePuntaje = textoPuntajeObj.render("errados: "+str(cantErradas), True, BLACK, WHITE)
+	textRectPuntaje.center = (X_INICIAL,Y_INICIAL+100)
+	BACKGROUND.blit(textSurfacePuntaje, textRectPuntaje)
+
+
 def actualizarLuces(cantEncendidas, BACKGROUND):
 	BLUE= (0,0,255)
 	MAX_LUCES=4
@@ -62,12 +80,13 @@ def iniciarServidor():
 	sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 	# Bind the socket to the port
-	server_address = ('192.168.0.4', 8888)
+	server_address = ('localhost', 8888)
 	print('starting up on port',server_address)
 	sock.bind(server_address)
 
 	# Listen for incoming connections
 	sock.listen(1)
+	time.sleep(0.5)
 	while True:
 		# Wait for a connection
 #		print('waiting for a connection')
@@ -187,6 +206,7 @@ class disco_nota:
 	color= (0,0,0)
 	posx = 0
 	posy = 0
+	altura= 40
 
 def iniciar_juego():
 	##VARIABLES GLOBAlES
@@ -304,6 +324,8 @@ def iniciar_juego():
 		actualizarLuces(powerUp_cant,BACKGROUND)
 		#VOLUMEN
 		actualizarVolumen(volumen,BACKGROUND)
+		#ACIERTOS
+		actualizarAciertos(cantAcertadas,cantErradas,BACKGROUND)
 
 		##NOTAS EN PANTALLA
 		#agregar notas
@@ -344,37 +366,46 @@ def iniciar_juego():
 		if ritmo == len(notas):
 			ritmo = 0
 
+		##LOGICA DE MOVIMIENTO y COLISION
 		aEliminar=[]
-
-		#LOGICA DE MOVIMIENTO y COLISION
+		seApreto=False
 		for nota in notasSonando:
 			#muevo las notas la cantidad fija especificada..
 			nota.posy += MOV_Y
+			
+			#chequeo si hay una nota en el espacio de la nota verde
+			if nota.color==GREEN and notaActual[0]==True:
+					if abs(560-nota.posy)<40:
+						seApreto=True
+			elif nota.color==RED and notaActual[1]==True:
+					if abs(560-nota.posy)<40:
+						seApreto=True
+			elif nota.color==YELLOW and notaActual[2]==True :
+					if abs(560-nota.posy)<40:
+						seApreto=True
+			elif nota.color==BLUE and notaActual[3]==True:
+					if abs(560-nota.posy)<40:
+						seApreto=True
+			elif nota.color==ORANGE and notaActual[4]==True:
+					if abs(560-nota.posy)<40:
+						seApreto=True
 
-			#chequeo colision..
-			if notaActual[0]==True:
-				pass
-			if notaActual[1]==True:
-				pass
-			if notaActual[2]==True:
-				pass
-			if notaActual[3]==True:
-				pass
-			if notaActual[4]==True:
-				pass
-
-
-			if nota.posy >= 600:
+			if seApreto==True:
 				aEliminar.append(nota)
+				cantAcertadas+=1
+				seApreto=False
+			elif nota.posy > 600:
+				aEliminar.append(nota)
+				cantErradas+=1
+
 			pygame.draw.circle(BACKGROUND,nota.color, (nota.posx,nota.posy), 20, 0)
-
-		
-
 
 		##ELIMINAR NOTAS FUERA DE LA PANTALLA
 		for nota in aEliminar:
 			notasSonando.remove(nota)
 
+
+			
 
 		##DIBUJO LAS NOTAS QUE APRETA EL CLIENTE...
 		if notaActual[0]==True:
