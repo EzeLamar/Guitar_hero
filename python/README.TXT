@@ -9,3 +9,6 @@ Bibliogradia:
 		https://pymotw.com/2/socket/tcp.html
 	[3] ejemplo Threads en python:
 		https://www.tutorialspoint.com/python3/python_multithreading.htm
+
+	[4] color RGB para python:
+		http://www.rapidtables.com/web/color/orange-color.htm
