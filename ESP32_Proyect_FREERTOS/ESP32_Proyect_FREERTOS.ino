@@ -41,13 +41,15 @@ using namespace std;
  //WIFI
  //const char* ssid     = "BVNET-A1F2";
  //const char* password = "YHA34R4KN7TLUEXY";
- //const char* ssid     = "GARCIA";
- //const char* password = "00438038265";
- const char* ssid     = "CECom's WiFi";
- const char* password = "graciasfabi";
+ const char* ssid     = "GARCIA";
+ const char* password = "00438038265";
+ //const char* ssid     = "CECom's WiFi";
+ //const char* password = "graciasfabi";
  //const char* ssid     = "r_laboratorios";
  //const char* password = "laquesea-2012";
- const char* IPservidor   = "192.168.1.126";
+ //const char* ssid     = "lelale";
+ //const char* password = "guitarhero";
+ const char* IPservidor   = "192.168.0.21";
  #define port 8888
  int sockfd = 0, n = 0;
  char recvBuff[1024];
@@ -60,7 +62,7 @@ using namespace std;
   int flagIniFinGame=0;
 
   //variable de FREERTOS
-  char task1Param[12] = "taskParam";
+  char PrincipalParam[12] = "taskParam";
   //FREERTOS Tareas
   TaskHandle_t t1 = NULL;
   TaskHandle_t t2 = NULL;
@@ -81,18 +83,18 @@ void setup() {
   
   /* we create a new task here */
   xTaskCreate(
-      task1,           /* Task function. */
-      "task1",        /* name of task. */
+      Principal,           /* Task function. */
+      "Principal",        /* name of task. */
       10000,                    /* Stack size of task */
-      (void *)task1Param,                     /* parameter of the task */
+      (void *)PrincipalParam,                     /* parameter of the task */
       1,                        /* priority of the task */
       &t1);                    /* Task handle to keep track of created task */
-  /* let task1 run first then create task2 */
+  /* let Principal run first then create task2 */
   xTaskCreate(
       task2,           /* Task function. */
       "task2",        /* name of task. */
       10000,                    /* Stack size of task */
-      (void *)task1Param,                     /* parameter of the task */
+      (void *)PrincipalParam,                     /* parameter of the task */
       1,                        /* priority of the task */
       &t2);                    /* Task handle to keep track of created task */
 }
@@ -161,14 +163,14 @@ byte getBotones(){
     salida |= B00100000;
     
    }
-   if(digitalRead(TECLA6)==LOW){
+   /*if(digitalRead(TECLA6)==LOW){
     //Serial.println("TECLA7");
     //write(sockfd, "TECLA7\n", 8);
     salida |= B01000000;
     
-   }
+   }*/
    //RESET
-   if(salida==96){
+   if(digitalRead(TECLA6)==LOW && digitalRead(TECLA7)==LOW){
     close(sockfd);
     ESP.restart();
    }
@@ -179,12 +181,7 @@ byte getBotones(){
 byte obtVolumen(){
   byte volumen=0;
   int adc=analogRead(VOLUME);
-  //delay(10);
-  //if(abs(antADC-adc)>500)
-  //volumen=0;
   
-  Serial.print("ADC: ");
-  Serial.println(adc);
 
   if(adc<820)
     volumen=0;
@@ -219,8 +216,8 @@ byte obtVolumen(){
         volumen=4;  
   if(adc<4096 && adc>=3700)
         volumen=4;  
-  Serial.print("VOLUMEN: ");
-  Serial.println(volumen);
+  //Serial.print("VOLUMEN: ");
+  //Serial.println(volumen);
        
   return volumen;
 
@@ -231,7 +228,7 @@ void EfectoVicDerrot(int y){ //efecto de luces que dice si se gano o perdio el j
       taskGane,           /* Task function. */
       "taskGane",        /* name of task. */
       10000,                    /* Stack size of task */
-      (void *)task1Param,                     /* parameter of the task */
+      (void *)PrincipalParam,                     /* parameter of the task */
       1,                        /* priority of the task */
       &tVic);                    /* Task handle to keep track of created task */
   else
@@ -239,7 +236,7 @@ void EfectoVicDerrot(int y){ //efecto de luces que dice si se gano o perdio el j
       taskPerdi,           /* Task function. */
       "taskPerdi",        /* name of task. */
       10000,                    /* Stack size of task */
-      (void *)task1Param,                     /* parameter of the task */
+      (void *)PrincipalParam,                     /* parameter of the task */
       1,                        /* priority of the task */
       &tDer);
   
@@ -291,18 +288,13 @@ void taskPerdi( void * parameter )
    
  }
 }
-void task1( void * parameter )
-{
-  
-  
-  
-  
-  
-  Serial.println((char *)parameter);
+void Principal( void * parameter )
+{  
+   Serial.println((char *)parameter);
   /* loop forever */
   int i=0;
   for(;;){
-    //Serial.println("Task1");
+    //Serial.println("Principal");
     EncenderLEDS(i);
     i++;
     
@@ -391,40 +383,39 @@ void task2( void * parameter )
      while(recvBuff[j]!= '<'){
         j++; //consumo caracteres hasta llegar al caracter de inicio de trama (paquete del juego)
      }
-
-      
+     
      
      if(recvBuff[j+2]=='$'){
       int tipoMensaje= atoi(&(recvBuff[j+3])); //dependiendo del tipo, de mensaje recibido, se debe modificar el estado de la guitarra , o bien, indicar que la misma puede transmitir (tiempo de refresco)
-      Serial.print(tipoMensaje);
-       // if(tipoMensaje=INICIARJUEGO){
-        //  flagIniFinGame=1;
-          //}
+      //Serial.print(tipoMensaje);
         if(tipoMensaje==REFRESCO){ //tipo de refresco
           //comienzo a armar tramas para enviar mensajes
-          //if(flagIniFinGame){
-              //if(digitalRead(TECLA6)==LOW){
-                contador++;
-                sprintf((char*)send_buf, "<%i$%i$%c>",7, KEYPRESS, apretados); //solo se manda este mensaje si esta en modo juego
-                write(sockfd, send_buf, 7);
-                if(contador==10){
-                if(potenciometro!=VolAnt){
-                bzero(&send_buf,8);
-                sprintf((char*)send_buf, "<%i$%i$%d>",7, VOLUMEN, potenciometro);
-                //Serial.println((char *) send_buf);
-                write(sockfd, send_buf, 7);
-                VolAnt=potenciometro;
-                }
-                contador=0;
-                }
-                //Serial.println("entro a teclas");            //  }
-              //FALTARIA HACER LA PARTE DE IN GAME, CUANDO MANDO EL POWER UP
-              if(digitalRead(TECLA6)==LOW && cambio > 2 && !activado){
+                
+                
+                if(digitalRead(TECLA6)==LOW && cambio >= 2 && !activado){
                   activado=true;
                   sprintf((char*)send_buf, "<%i$%i$>",6, POWUP); //solo se manda este mensaje si esta en modo juego
                   write(sockfd, send_buf, 6);
-                 Serial.println("entro a power up"); 
-                }
+                 //Serial.println("entro a power up"); 
+                }else
+                      if(contador>200 && potenciometro!=VolAnt){
+                          bzero(&send_buf,8);
+                          sprintf((char*)send_buf, "<%i$%i$%d>",7, VOLUMEN, potenciometro);
+                          //Serial.println((char *) send_buf);
+                          write(sockfd, send_buf, 7);
+                          VolAnt=potenciometro;
+                          contador=0;
+                          }
+                       else{
+                           sprintf((char*)send_buf, "<%i$%i$%c>",7, KEYPRESS, apretados); //solo se manda este mensaje si esta en modo juego
+                            write(sockfd, send_buf, 7);
+                            contador++;
+                            }
+                    
+                  
+               
+              //FALTARIA HACER LA PARTE DE IN GAME, CUANDO MANDO EL POWER UP
+              
         }
        else{ 
         //es un mensaje de modificacion
@@ -467,9 +458,7 @@ void task2( void * parameter )
         }
      }
    }else {
-      //if(recibido==-1)
-        //desconectar();
-        //1=1;
+      
    }
      // Serial.println((char *) send_buf);
 
