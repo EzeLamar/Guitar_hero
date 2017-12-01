@@ -38,17 +38,10 @@ using namespace std;
  #define VICTDERR 5
  #define MULTIPLICADOR 6
  
- //WIFI
- //const char* ssid     = "BVNET-A1F2";
- //const char* password = "YHA34R4KN7TLUEXY";
- const char* ssid     = "GARCIA";
- const char* password = "00438038265";
+ //WI
  //const char* ssid     = "CECom's WiFi";
  //const char* password = "graciasfabi";
- //const char* ssid     = "r_laboratorios";
- //const char* password = "laquesea-2012";
- //const char* ssid     = "lelale";
- //const char* password = "guitarhero";
+ 
  const char* IPservidor   = "192.168.0.21";
  #define port 8888
  int sockfd = 0, n = 0;
